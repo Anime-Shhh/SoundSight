@@ -1,5 +1,5 @@
-from sys import flags
 import torch.nn as nn
+import torch as torch
 
 
 class ResidualBlock(nn.Module):
@@ -9,7 +9,9 @@ class ResidualBlock(nn.Module):
             in_channels, out_channels, 3, stride, padding=1, bias=False
         )
         self.bn1 = nn.BatchNorm2d(out_channels)
-        self.conv1 = nn.Conv2d(
+
+        # 2nd pass in block
+        self.conv2 = nn.Conv2d(
             out_channels, out_channels, 3, stride, padding=1, bias=False
         )
         self.bn2 = nn.BatchNorm2d(out_channels)
@@ -25,3 +27,21 @@ class ResidualBlock(nn.Module):
                 nn.Conv2d(in_channels, out_channels, 1, stride, bias=False),
                 nn.BatchNorm2d(out_channels),
             )
+
+    # forward pass, inputs: x is the input data
+    def forward(self, x):
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = torch.relu(out)
+
+        out = self.conv2(x)
+        out = self.bn2(out)
+        # you want to make sure input and outputs match. if they do
+        # then you can just add input to the output and return that
+        # otherwise, you need to batch normalize as defined per the
+        # ResidualBlock class above
+        shortcut = self.shortcut if self.use_shortcut else x
+        out_add = out + shortcut
+        out = torch.relu(out_add)
+        # returns the final allowed shortcut output to pass to the next block/layer
+        return out

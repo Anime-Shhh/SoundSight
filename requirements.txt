@@ -1,2 +1,5 @@
 modal
 torch
+path
+pandas
+torchaudio
